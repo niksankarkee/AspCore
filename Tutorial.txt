@@ -1,0 +1,646 @@
+Asp.net core project setup steps
+	
+	-> add AddRazorRuntimeCompilation form nuget manager
+	-> edit services.AddRazorPages() to services.AddRazorPages().AddRazorRuntimeCompilation();
+	
+	Adding Area
+	->add area 
+		- Customer
+		- Admin
+	 Delete Data and Modules from Customer and Admin both
+	 add {area=Customer}/... from startup.cs file at the app.UseEndpoints
+	
+	Moving files to make Area Work
+	-> move HomeController.cs file to Controllers under the Customer folder
+	-> move Home folder inside Views under the customer folder
+	-> add --[Area("Customer")]-- under the HomeController.cs file inside namespace
+	-> to use taghelpers copy _ViewImports.cshtml and _ViewStart.cshtms inside Views folder of Customer and Admin
+	-> To make areas is workin change path of _ViewStart file of both customer and Admin
+		change to Layout = "~/Views/Shared/_Layout.cshtml";
+
+	Adding Database
+	-> change appsettings.json file 
+		"ConnectionStrings": {
+    "DefaultConnection": "Server=DESKTOP-E69L3SC;Database=Spice;Trusted_Connection=True;MultipleActiveResultSets=true"
+  },
+  
+	-> Go to package manager console for migration
+		- (Whenever you want to change the database you should have change the migration)
+	-> update-database
+	->	
+	
+	Updating NavBar and Scaffolding identity
+	-> change navbar class to navbar-dark and home and privacy delete dark class
+	-> for login and register we should do from identity folder for that add new scaffolding
+		- right click on Identity
+		- Add -> New Scaffolded Item
+		- choose identity option from left side
+		- add identity
+		- select override all files
+		- click ... button and views-> shared -> _Layout.cshtml (~/Views/Shared/_Layout.cshtml)
+		- Data context class : choose ApplicationDbContext(...)
+				(Above option is showing because we created individual authentication option)
+		- Click Add button
+			(It will add all of the pages inside area's identity)
+	-> Go tho Views(main) -> Shared -> _LoginPartial.cshtml
+	-> delete css class (text-dark)	
+	
+	Adding Dropdown to NavBar
+	-> _Layout.cshtml create dropdown for Content Management 
+	
+	
+	------------------------------------------------X------------------------------------------------
+												5. Category
+	------------------------------------------------X------------------------------------------------
+	Category Model
+	-> Model -> Add new class named "Category.cs" 
+	-> Create Id and Name property and Id as [Key]  Name as [Required]
+	-> inside ApplicationDbContext.cs add new DbSet as follows:
+		 public DbSet<Category> Category { get; set; } 
+	-> add-migration [migration name] addCategoryToDatabase
+	-> update-database
+	
+	Add Category Controller and Get Action Method
+	->Add category controller
+		- Admin -> add controller -> empty controller -> CategoryController.cs
+	-> add [Area("Admin")] in CategoryController.cs
+	-> Add asp helper tag to _Layout.cshtml under the dropdown menu
+		 <a class="dropdown-item" asp-action="Index" asp-controller="Category" asp-area="Admin">Category</a>
+		 if above link click then call action method of categoryController
+	-> add constroter using ctor snippits and add parametor ApplicationDbContext 
+			public CategoryController(ApplicationDbContext db)
+	-> Above constroter add private readonly ApplicationDbContext _db;
+	-> Change - public IActionResult Index(){...} To public async Task<IActionResult> Index(){return View(await _db.Category.ToListAsync());}
+
+	Add Category Index View
+	-> Inside view of Admin folder Create new folder name Category -> Add View -> View Name Index -> Template -> Empty -> Add
+		First thing we always care about whenever a creating a view I should think about what will be the model that will be passed 
+		from the controller to this view
+			(This time CategoryController)
+	-> Add @model IEnumerable<Category> at the top of the Index.cshtml (inside admin -> view)
+	
+	Add Background and Images
+	-> add images folder inside wwwroot folder 
+		working with css of site.css
+		
+			.backgroundWhite{
+				background-color: white;
+				padding: 30px;
+				border-radius: 10px;
+				margin-bottom: 30px;
+			}
+
+			.backgroundWhiteBorder {
+				background-color: white;
+				padding: 30px;
+				border-radius: 10px;
+				margin-bottom: 30px;
+				border: 1px solid #ddd;
+			}
+
+			.backgroundWhite Border10Padding{
+				background-color: white;
+				padding: 10px;
+				border-radius: 10px;
+				border: 1px solid #ddd;
+			}
+			
+	-> inside _Layout.cshtml add class name search-background in <body> tag
+	
+	Category Index View Part(category list design)
+	-> Design index.cshtml pages
+		<div class="border backgroundWhite">
+			<div class="row">
+				<div class="col-6">
+					<h2 class="text-info">Category List</h2>
+				</div>
+				<div class="col-6 text-right">
+					Create Button
+				</div>
+
+			</div>
+			<br />
+			<div>
+			@if (Model.Count() > 0) (IF there is category)
+			{
+				<table class="table table-striped border">
+					<tr class="table-secondary">
+						<th>
+							@Html.DisplayNameFor(m=>m.Name) 
+						</th>
+					</tr>
+					 @foreach (var item in Model)
+					{
+						<tr>
+							<td>
+								@Html.DisplayFor(m => item.Name) (All name) (This is html helper to show the name from database from catagory.cs of main model)
+							</td>
+							<td>
+								EDIT | DELETE | DETAILS (This is for buttons)
+							</td>
+						</tr>
+					}
+				</table>
+			}
+			else 
+			{
+				<p>No Category exists..</p>
+			}
+			</div>
+		</div>
+		
+	-> 	@Html.DisplayNameFor(m=>m.Name) is for read data from database
+	
+	Create Button Partial View (Because create new button will be used for other places also)
+	-> create Button using from index.cshtml inside div class col-6 text-right
+			<a asp-action="Create" class="btn btn-info"><i class="fas fa-plus"></i> &nbsp; Create New</a>
+			
+	-> cut above tag go to Views -> Shared -> add view - Check on Create as a partial view and view name _CreateButtonPartial -> Add
+	-> Delete default code of _CreateButtonPartial.cshtml
+	-> past above anchor tag inside <p> tag 
+	-> Go to Index.cshtml -> inside div ->  <partial name="_CreateButtonPartial" />
+	
+	Create Button Partial View Part1
+	-> We need to add action method for create 
+	-> inside CategoryController.cs
+		 // GET -CREATE
+        public IActionResult Create()
+        {
+            return View();
+        }
+			This time we do not need to feel any value and pass any index in project so we are using IActionResult insted async Task<IActionResult>
+	-> right click on Create() and Add view 
+	-> default
+		It will automatically create in the correct folder (inside the category folder of Admin)
+		create Create.cshtml save with the folder name create button
+			
+	
+	Create and Back to List Button Partial View
+	-> Views -> Shared -> Add view -> _CreateAndBackToListButton (Create as partial view)
+	-> Cut row class from _create.cshtml and paste to _CreateAndBackToListButton
+	-> Add following tag to Create.cshtml page under the place of before cuted from
+		<partial name="_CreateAndBackToListButton"> 	
+		
+	Create Category POST Action Method
+	-> add following code inside CategoryController.cs
+		// POST - CREATE
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Category category)
+        {
+            if (ModelState.IsValid)
+            {
+                // if valid
+                _db.Category.Add(category);
+                await _db.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(category);
+        }
+	
+	Table Button Partial View
+	-> Add css button for table for edit details delete using partial view
+		create a partial view inside shared with name _TableButtonPartial
+		and add following code 
+		
+		@model int
+
+		<td style="width:150px">
+			<div class="btn-group" role="group">
+				<a class="btn btn-primary text-white" asp-action="Edit" asp-route-Id="@Model">
+					<i class="fas fa-edit"></i>
+				</a>
+				<a class="btn btn-success text-white" asp-action="Details" asp-route-Id="@Model">
+					<i class="fas fa-list-alt"></i>
+				</a>
+				<a class="btn btn-danger text-white" asp-action="Delete" asp-route-Id="@Model">
+					<i class="fas fa-trash-alt"></i>
+				</a>
+			</div>
+		</td>
+		
+	-> add following code inside index of admin
+		<partial name="_TableButtonPartial" model="item.Id" />
+		
+	Edit Category Get Action	
+	-> add get method inside CategoryControllers.cs
+		        //GET -EDIT
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if(id == null)
+            {
+                return NotFound();
+            }
+            var category = await _db.Category.FindAsync(id);
+            if(category == null)
+            {
+                return NotFound();
+            }
+            return View(category);
+        }
+	
+	Edit Category View
+	-> Create a view of Edit
+	-> choose template as edit
+	-> Model Class: Category(Spice.Models)
+	-> Delete all html code 
+	-> copy everything from create.cshtml file
+	-> edit following html tag 
+		<br />
+		<h2 class="text-info">Edit Category</h2>
+		<br />
+		<form method="post" asp-action="Edit">
+			<div class="border backgroundWhite">
+				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+				<div class="form-group row">
+					<div class="col-2">
+						<label asp-for="Name" class="col-form-label"></label>
+					</div>
+					<div class="col-5">
+						<input asp-for="Name" class="form-control" />
+					</div>
+					<span asp-validation-for="Name" class="text-danger"></span>
+				</div>
+				<div class="form-group row">
+					<div class="col-5 offset-2">
+						<div class="row">
+							<div class="col-6">
+								<input type="submit" class="btn btn-info form-control" asp-route-id="@Model.Id" value="Update" />
+							</div>
+							<div class="col-6">
+								<a class="btn btn-success form-control" asp-action="Index">Back to List</a>
+							</div>
+
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</form>
+	
+	
+	Edit and Back to List Button
+	-> Add partial view _EditAndBackToListButton
+	-> Create a partial view for edit with name _EditAndBackToListButton
+	-> Add following code which is cut from Edit.cshtml
+		@model int
+		<div class="row">
+			<div class="col-6">
+				<input type="submit" class="btn btn-info form-control" asp-route-id="@Model" value="Update" />
+			</div>
+			<div class="col-6">
+				<a class="btn btn-success form-control" asp-action="Index">Back to List</a>
+			</div>
+
+		</div>
+	
+	
+	-> Add following tag to Edit.cshtml for call a partial view
+		<partial name="_EditAndBackToListButton" model="Model.Id" />
+		
+		
+	Edit Category POST Action
+	->Add the following code inside CategoryController.cs
+		[HttpPost]
+        [ValidateAntiForgeryToken]
+		// Above two property is always require while using post method
+        public async Task<IActionResult> Edit(Category category)
+        {
+            if (ModelState.IsValid)
+            {
+                _db.Update(category); // This update method is update all the property 
+										// This time we have only one field to update so this is not a problem 
+										// But if there is a lots of field we should use another method 
+										// We will use that method		
+                await _db.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(category);
+        }
+	
+	Delete Category Get Action
+	-> This method is same as Edit Get Action method 
+	-> so the following code will apply
+		//GET -Delete
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            var category = await _db.Category.FindAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+            return View(category);
+        }
+
+	Delete Category View
+	-> Add view for delete [Delete.cshtml]
+	-> Copy Everything form edit view 
+	-> Add partial view [_DeleteAndBackToListButton]
+		@model int
+		<div class="row">
+			<div class="col-6">
+				<input type="submit" class="btn btn-danger form-control" asp-route-id="@Model" value="Delete" />
+			</div>
+			<div class="col-6">
+				<a class="btn btn-success form-control" asp-action="Index">Back to List</a>
+			</div>
+
+		</div>
+		
+	-> As following tag inside delete view
+		@model Spice.Models.Category
+
+		@{
+			ViewData["Title"] = "Delete";
+			Layout = "~/Views/Shared/_Layout.cshtml";
+		}
+
+		<br />
+		<h2 class="text-info">Delete Category</h2>
+		<br />
+		<form method="post" asp-action="Edit">
+			<div class="border backgroundWhite">
+				<div class="form-group row">
+					<div class="col-2">
+						<label asp-for="Name" class="col-form-label"></label>
+					</div>
+					<div class="col-5">
+						<input asp-for="Name" readonly class="form-control" />
+					</div>
+				</div>
+				<div class="form-group row">
+					<div class="col-5 offset-2">
+						<partial name="_DeleteAndBackToListButton" model="Model.Id" />
+					</div>
+				</div>
+
+			</div>
+		</form>
+	
+
+	-> Change the proporty of Category.cs as follows	
+		[Display(Name ="Category Name")]
+		above property for display name = Category Name rather than default value Name 
+
+	Delete Category POST
+	-> 
+		[HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed (int? id)
+        {
+            var category = await _db.Category.FindAsync(id);
+            if(category == null)
+            {
+                return View();
+            }
+            _db.Category.Remove(category);
+            await _db.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+		
+	Assignment - 1
+	-> https://github.com/bhrugen/Spice/commit/a2870a7eb15424ca65c99c55e34d26c5539c8ecf
+	
+	
+	------------------------------------------------X------------------------------------------------
+												6. Sub Category
+	------------------------------------------------X------------------------------------------------
+	
+	Add sub category
+	-> Model -> add class -> SubCategory.cs
+	-> Copy property form category.cs
+	-> and add the following code [we will use foreign key ]
+		public class SubCategory
+		{
+			[Key]
+			public int Id { get; set; }
+			[Display(Name = "SubCategory Name")]
+			[Required]
+			public string Name { get; set; }
+
+			[Required]
+			[Display(Name ="Category")]
+			public int CategoryId { get; set; }
+
+			[ForeignKey("CategoryId")]
+			public virtual Category Category { get; set; }
+		}
+	
+	-> inside applicationDbContext.cs
+		add db context as follows
+			 public DbSet<SubCategory> SubCategory { get; set; }
+			 
+	-> Add migration from package manager console
+			add-migration addSubCategoryToDatebase
+			update-database
+	
+	Add Sub Category Index Action Method inside the sub category controllers
+	-> add controller from Area -> Admin -> controller [SubCategoryController]
+	-> add area inside SubCategoryController.cs
+		[Area("Admin")]
+	-> add following code 
+		private readonly ApplicationDbContext _db;
+        public SubCategoryController(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+        
+        // GET - INDEX
+        public async Task<IActionResult> Index()
+        {
+            var subCategories = await _db.SubCategory.Include(s=> s.Category).ToListAsync();
+            return View(subCategories);
+        }
+	-> inside _Layout add in the sub catagory field 
+		 <a class="dropdown-item" asp-action="Index" asp-controller="SubCategory" asp-area="Admin">Sub Category</a>
+
+	SubCategory Index View
+	-> Add view of index from subCategoryController
+	-> Copy from Index.cshtml which lies inside Category folder
+		and change as follows (just name and 1 field )
+		
+		@model IEnumerable<SubCategory>
+		@{
+			ViewData["Title"] = "Index";
+			Layout = "~/Views/Shared/_Layout.cshtml";
+		}
+
+		<br />
+		<br />
+
+		<div class="border backgroundWhite">
+			<div class="row">
+				<div class="col-6">
+					<h2 class="text-info">Sub Category List</h2>
+				</div>
+				<div class="col-6 text-right">
+					<partial name="_CreateButtonPartial" />
+				</div>
+
+			</div>
+			<br />
+			<div>
+				@if (Model.Count() > 0)
+				{
+					<table class="table table-striped border">
+						<tr class="table-secondary">
+							<th>
+								@Html.DisplayNameFor(m => m.Name)
+							</th>
+							<th>
+								@Html.DisplayNameFor(m => m.Category.Name)
+							</th>
+							<th></th>
+							<th></th>
+						</tr>
+						@foreach (var item in Model)
+						{
+					<tr>
+						<td>
+							@Html.DisplayFor(m => item.Name)
+						</td>
+						<td>
+							@Html.DisplayFor(m => item.Category.Name)
+						</td>
+						<td>
+							<partial name="_TableButtonPartial" model="item.Id" />
+						</td>
+					</tr>
+						}
+					</table>
+				}
+				else
+				{
+					<p>No Sub Category exists..</p>
+				}
+			</div>
+		</div>
+
+	SubCategory and Category View Model
+	->	we should create a view model because we should have to handle too many thing 
+	-> Create a new folder inside Models name ViewModels 
+	-> Create a model (class file ) SubCategoryAndCategoryViewModel.cs
+	-> Create following property
+		public IEnumerable<Category> CategoryList { get; set; }
+        public SubCategory SubCategory { get; set; }
+        public List<string> SubCategoryList { get; set; }
+        public string StatusMessage { get; set; }
+	
+	SubCategory Create GET Action
+	-> Add following inside subCategoryController.cs
+		// GET - CREATE
+        public async Task<IActionResult> Create()
+        {
+            SubCategoryAndCategoryViewModel model = new SubCategoryAndCategoryViewModel()
+            {
+                CategoryList = await _db.Category.ToListAsync(),
+                SubCategory = new Models.SubCategory(),
+                SubCategoryList = await _db.SubCategory.OrderBy(p => p.Name).Select(p => p.Name).Distinct().ToListAsync()
+            };
+            return View(model);
+        }
+		
+	Extention Method
+	-> Add new folder inside Spice with the name of Extensions
+	-> Add two extensions 
+		- IEnumerableExtension.cs
+		- ReflectionExtension.cs
+	-> All of the extension method will be static method 
+	-> add following code inside IEnumerableExtension.cs
+		 public static IEnumerable<SelectListItem> selectListItem<T>(this IEnumerable<T> items, int selectedValue)
+        {
+            return from item in items
+                   select new SelectListItem
+                   {
+                       Text = item.GetPropertyValue("Name"),
+                       Value = item.GetPropertyValue("Id"),
+                       Selected = item.GetPropertyValue("Id").Equals(selectedValue.ToString())
+                   };
+        }
+	-> Add following code for ReflectionExtension.cs
+		 public static class ReflectionExtension
+		{
+			public static string GetPropertyValue<T> (this T item, string propertyName)
+			{
+				return item.GetType().GetProperty(propertyName).GetValue(item, null).ToString();
+			}
+		}
+		
+		Above extension method is for showing in client side as a dropdown box 
+	
+	SubCategory Create View 
+	-> add create view from SubCategoryController.cs Create method 
+	-> copy everything from create view of Category 
+	-> Change as following 
+		@model Spice.Models.ViewModels.SubCategoryAndCategoryViewModel
+		@using Spice.Extensions
+
+
+		@{
+			ViewData["Title"] = "Index";
+			Layout = "~/Views/Shared/_Layout.cshtml";
+		}
+		<br />
+		<h2 class="text-info">Create Sub Category</h2>
+		<br />
+
+		<div class="border backgroundWhite">
+			<div class="col-8 border-right">
+				<form asp-action="Create">
+					<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+					<div class="form-group row">
+						<div class="col-3">
+							<label asp-for="SubCategory.CategoryId" class="col-form-label"></label>
+						</div>
+						<div class="col-5">
+							<select id="ddlCategorylist" asp-for="SubCategory.CategoryId" asp-items="Model.CategoryList.ToSelectListItem(Model.SubCategory.CategoryId)" class="form-control"></select>   
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-3">
+							<label asp-for="SubCategory.Name" class="col-form-label"></label>
+						</div>
+						<div class="col-5">
+							<input asp-for="SubCategory.Name" class="form-control" />
+						</div>
+						<span asp-validation-for="SubCategory.Name" class="text-danger"></span>
+					</div>
+					<div class="form-group row">
+						<div class="col-5 offset-3">
+							<partial name="_CreateAndBackToListButton">
+
+						</div>
+					</div>
+
+
+				</form>
+			</div>
+			<div class="col-3 offset-1">
+				@if(Model.SubCategoryList.Count() > 0)
+				{
+					<p>Existing Subcategories: </p>
+
+					<div id="SubCategoryList">
+						<ul class="list-group"></ul>
+					</div>
+				}
+			</div>
+
+
+		</div>
+
+	SubCategory  Create POST
+	->
+
+
+
+	
+	
+	
+	

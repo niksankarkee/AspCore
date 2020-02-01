@@ -22,7 +22,7 @@ Asp.net core project setup steps
 	-> change appsettings.json file 
 		"ConnectionStrings": {
     "DefaultConnection": "Server=DESKTOP-E69L3SC;Database=Spice;Trusted_Connection=True;MultipleActiveResultSets=true"
-  },
+  	},
   
 	-> Go to package manager console for migration
 		- (Whenever you want to change the database you should have change the migration)
@@ -50,7 +50,7 @@ Asp.net core project setup steps
 	
 	
 	------------------------------------------------X------------------------------------------------
-												5. Category
+						5. Category
 	------------------------------------------------X------------------------------------------------
 	Category Model
 	-> Model -> Add new class named "Category.cs" 
